@@ -32,6 +32,7 @@ output:
 9. Submit your RMD file, the HTML output and a link to your GitHub Repo on Canvas.
 
 
+
 ## Data frame basics
 
 We will continue working with the nycflights dataset we looked at in class. **Please be sure to keep the data file in the same directory as the RMD file - your project directory.**
