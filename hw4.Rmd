@@ -1,0 +1,168 @@
+---
+title: "HW4"
+author: "Tanisha Pardasani"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## Importing Packages
+
+```{r}
+library(ggplot2)
+library(tidyverse)
+```
+
+
+## Reading Data
+
+```{r}
+# Reading in and cleaning the data
+airbnb <- read.csv('AB_NYC_2019.csv', stringsAsFactors = TRUE)
+airbnb$id <- NULL
+airbnb$reviews_per_month <- ifelse(is.na(airbnb$reviews_per_month) == TRUE, 0,
+                                   airbnb$reviews_per_month)
+
+head(airbnb)
+```
+
+```{r}
+# Structure of the data
+str(airbnb)
+```
+
+```{r}
+# Summary of the data
+summary(airbnb)
+```
+
+```{r}
+# Barplot of types of airbnbs
+home_split <- ggplot(airbnb, aes(x=room_type)) + geom_bar()
+home_split
+```
+
+```{r}
+# Average price by room type
+price_per_airbnb_type <- round(tapply(airbnb$price,
+                                      airbnb$room_type, mean, na.rm=TRUE), 2)
+price_per_airbnb_type
+```
+Entire home/apt room types are the most expensive, with an average price of $211.79 while shared rooms tend to be the least expensive, with an average price of $70.13.
+
+```{r}
+# Average number of reviews by room type
+reviews_per_airbnb_type <- tapply(airbnb$reviews_per_month,
+                                   airbnb$room_type, mean, na.rm=TRUE)
+reviews_per_airbnb_type
+```
+
+
+```{r}
+# Number of airbnbs by borough type
+borough_split <- ggplot(data = airbnb, aes(x = neighbourhood_group)) + geom_bar()
+borough_split
+```
+
+```{r}
+# Number of airbnbs in the cities in the largest borough in NYC
+airbnb %>%
+  filter(neighbourhood_group == "Manhattan") %>%
+  ggplot(aes(x=neighbourhood)) + geom_bar() +theme(axis.text.x = element_text(angle = 90))
+
+```
+
+```{r}
+# Average price per neighborhood group
+price_per_neighborhood <- round(tapply(airbnb$price,
+                                      airbnb$neighbourhood_group, mean, na.rm=TRUE), 2)
+price_per_neighborhood
+```
+
+Manhattan is the borough with the most expensive and the largest number of airbnbs. The neighborhoods in Manhattan with the most airbnbs are Harlem, Hell's Kitchen, East Village, the Upper West Side, and the Upper East Side.
+
+```{r}
+# Scatterplot of reviews per airbnb less than $1000
+airbnb %>%
+  filter(price < 1000) %>%
+  ggplot(aes(x = number_of_reviews, y = price, alpha = .35)) + geom_point() + geom_smooth()
+
+```
+
+```{r}
+# Scatterplot of price by minimum night
+airbnb %>%
+  filter(price < 1000) %>%
+  ggplot(aes(x = minimum_nights, y = price)) + geom_point() + geom_smooth()
+
+```
+# Mapping the Top 100 Most Expensive Rentals
+## Find the most expensive rentals
+```{r}
+abnycprice <- airbnb[order(-airbnb$price), ]
+top100 <- abnycprice[1:100, ]
+head(top100)
+```
+
+##Create a Map
+```{r}
+library(leaflet)
+library(dplyr)
+library(ggplot2)
+leaflet(data = top100) %>%
+  addTiles() %>%
+  setView(-74.00, 40.71, zoom = 11) %>%
+  addProviderTiles("CartoDB.Positron") %>%
+  addMarkers()
+```
+The map above shows that the majority of the 100 most expensive rentals are in Manhattan.
+
+```{r}
+#correlation of description length and price
+description <-
+airbnb %>%
+summarize (name, price) %>%
+mutate ( letter_count = str_length (name)) 
+
+head(description)
+
+avg <- ( mean ( description$letter_count))
+avg
+
+#letter counts below avg (37)
+low <-
+description %>%
+filter ( letter_count < 38) %>%
+summarize (name, price, letter_count) 
+head(low)
+
+avg_low <- ( mean ( low$letter_count))
+avg_low
+
+
+#letter counts below avg (37)
+high <-
+description %>%
+filter ( letter_count > 38) %>%
+summarize (name, price, letter_count) 
+head(high)
+
+avg_high <- ( mean (high$letter_count))
+avg_high
+```
+
+```{r}
+#plot of correlation of description length and price
+description %>%
+ggplot(aes(x = letter_count, y = price, alpha = .35)) + geom_point()
+```
+
+There doesn't seem to be much of a strong correlation between description length and price when looking at the plot. Most of the rentals have descriptions with 0-50 letters and the most expensive ones fall in that range. The average letter count is about 37. All the descriptions of rentals that are above 50 letters are less expensive relative to the others, but there are very few in this range.
+
+For descriptions below the approximate average letter count of 38, the average price is about $28.58.
+For descriptions above the approximate average letter count of 38, the average price is about $46.23.
+These averages show that descriptions with lower letter counts tend to be cheaper. This could be because longer descriptions include more features and amenities of the airbnbs, which make them more expensive.
+
