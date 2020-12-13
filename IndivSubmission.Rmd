@@ -1,0 +1,166 @@
+---
+title: "Individual Final Submission TO 404"
+author: "Tanisha Pardasani"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(dplyr) 
+library(ggplot2)
+library(lubridate)
+```
+
+
+```{r}
+# Reading in and cleaning the data
+airbnb <- read.csv('AB_NYC_2019.csv', stringsAsFactors = TRUE)
+airbnb$id <- NULL
+airbnb$reviews_per_month <- ifelse(is.na(airbnb$reviews_per_month) == TRUE, 0,
+                                   airbnb$reviews_per_month)
+
+head(airbnb)
+```
+
+We are looking at the Manhattan neighborhood only.
+```{r}
+#restrict neigbourhood group to Manhattan 
+manhattan <-
+    airbnb %>%
+    group_by (name) %>%
+    filter (neighbourhood_group == "Manhattan")
+head(manhattan)
+```
+## Does the number of reviews on AirBnb rentals in Manhattan have an effect on the price?
+```{r}
+  ggplot(manhattan, aes (x=number_of_reviews, y = price)) + geom_point() +
+  xlab ("Number of Reviews") + ylab ("Price") + ggtitle("Manhattan AirBnbs : Relationship between Number of Reviews and Price")
+
+```
+
+
+Looking at the plot, it appears that the number of reviews and price of AirBnb rentals in Manhattan are negatively correlated. In other words the plot shows that AirBnbs with more reviews tend to be cheaper than those with less. The most expensive AirBnbs are the most expensive. 
+
+If an AirBnb has many reviews, there is bound to be at least some negative reviews. On the other hand, if an AirBnb has very few reviews it is likely that they could all be positive, giving the potential customer a skewed view of the quality of the rental. A customer is probably likely to choose a rental with few relatively positive reviews over a rental with many mixed reviews. Therefore, the rentals with fewer reviews are likely more popular and more in demand than rentals with many reviews. Due to this, it makes sense that the prices for rentals with high amounts of reviews tend to be cheaper because of lower demand and more negative reviews.
+
+## What is the average number of reviews and average price of Manhattan AirBnbs?
+## What is the average price of rentals that have above and below the mean number of reviews?
+```{r}
+avg_number_of_reviews <- ( mean ( manhattan$number_of_reviews))
+avg_number_of_reviews
+
+avg_price <- ( mean ( manhattan$price))
+avg_price
+
+
+#average price for rentals with below the average number of reviews (21)
+low <-
+manhattan %>%
+filter ( number_of_reviews < 21) 
+
+avg_low <- ( mean ( low$price))
+avg_low
+
+
+#average price for rentals with above the average number of reviews (21)
+high <-
+manhattan %>%
+filter ( number_of_reviews > 21) 
+
+avg_high <- ( mean ( high$price))
+avg_high
+```
+
+We see that the average price for Manhattan AirBnb rentals is about $196, with an average of 21 reviews. The average price for rentals that have below the average number of reviews is about $206. The average price for rentals that have above the average number of reviews is about $165. We see that price increases as number of reviews decreases.
+
+
+## Is there a relationship between the number of miniumum nights required to book an AirBnb and the price?
+```{r}
+  ggplot(manhattan, aes (x=minimum_nights, y = price)) + geom_jitter() +
+ xlab ("Minimum Nights") + ylab ("Price") + ggtitle("Manhattan AirBnbs : Relationship between Minimum Nights and Price")
+
+```
+
+
+From the Jitter Plot, we see that minimum nights and price are negatively correlated. In other words, it appears that prices increases and minimum nights decreases.
+
+People who want to rent our their space as an AirBnb rental would likely prefer not to have someone stay for a small amount of time, because that requires more work to find another renter. It is much easier to have someone stay a longer amount of time. The preference and goal of having renters stay longer amount of time is likely why the price goes down as the minimum nights required goes up.
+
+
+## Does the length of the description have an impact of the rental price?
+```{r}
+
+description <-
+manhattan %>%
+summarize (name, price) %>%
+mutate ( letter_count = str_length (name)) 
+head (description)
+
+#plot of correlation of description length and price
+description %>%
+ggplot(aes(x = letter_count, y = price, alpha = .35)) + geom_point() +
+xlab ("Description Letter Count") + ylab ("Price") + ggtitle("Manhattan AirBnbs : Relationship between Description Length and Price")
+```
+
+
+There doesn't seem to be much of a strong correlation between description length and price when looking at the plot. Most of the rentals have descriptions with 0-50 letters and the most expensive ones fall in that range. The average letter count is about 37. All the descriptions of rentals that are above 50 letters are less expensive relative to the others, but there are very few in this range.
+
+This could suggest that descriptions with lower letters counts tend to be cheaper because longer descriptions include more features and amenities of the airbnbs, which make them more expensive.
+
+
+## Impact of description on price
+```{r}
+
+#average price Manhattan AirBnbs
+avg_price <- ( mean ( description$price))
+avg_price
+
+#average price Manhattan AirBnbs with certain words in Description
+cozy <-
+    manhattan %>%
+    filter ( grepl ( "Cozy", name, ignore.case = TRUE)) 
+
+townhome <-
+    manhattan %>%
+    filter ( grepl ( "Townhome", name, ignore.case = TRUE)) 
+
+tribeca <-
+    manhattan %>%
+    filter ( grepl ( "Tribeca", name, ignore.case = TRUE)) 
+
+#average price Manhattan AirBnbs with Cozy in description
+avg_price_cozy <- ( mean ( cozy$price))
+avg_price_cozy
+
+#average price Manhattan AirBnbs with Townhome in description
+avg_price_townhome <- ( mean ( townhome$price))
+avg_price_townhome
+
+#average price Manhattan AirBnbs with Tribeca in description
+avg_price_tribeca <- ( mean ( tribeca$price))
+avg_price_tribeca
+
+
+```
+The average price for a Manhattan AirBnb rental is about $196.
+
+The average price for a Manhattan AirBnb rental with the word "Cozy" in the description is about $130.
+
+The average price for a Manhattan AirBnb rental with the word "Townhome" in the description is about $773.
+
+The average price for a Manhattan AirBnb rental with the word "Tribeca" in the description is about $441.
+
+We can see that rentals with "Cozy" in their description have a slighter lower average price than the average AirBnb rental. Because there is not much of a significant difference between the averages, we cannot make the conclusion that this keyword has an impact on rental price.
+
+We can also see that rentals with either "Townhome" or "Tribeca" in their description have a much higher average price than the average AirBnb rental. We can conclude that it is likely that these two keywords impact the rental price. 
+
+"Townhome" and "Tribeca" are both words that are typically correlated to more expensive rentals. "Townhome" suggests that the rental is probably a larger size than a typical NYC apartment. "Tribeca" suggests that the rental is located in the Tribeca area in NYC, which is a very wealthy and expensive area. This is likely while these keywords are correlated to higher rental prices.
+
+"Cozy" only refers to the quality of the apartment, and is also very subjective. A small apartment and a big townhome can both be described as "cozy". This is likely why this keywords is not correlated with rental price.
+
+
+
+
+
+
+
